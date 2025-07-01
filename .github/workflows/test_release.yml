@@ -23,7 +23,7 @@ on:
           or "all" to build every kernel.
         required: true
         type: string
-        default: 'all'
+        default: 'a12-5.10'
       kernelsu_variant:
         description: "Select KernelSU"
         required: true
@@ -56,7 +56,7 @@ on:
         description: 'Enable KPM functionality?'
         required: true
         type: boolean
-        default: true
+        default: false
       get_manager:
         description: 'Get the latest KSU Manager at the same time?'
         required: true
