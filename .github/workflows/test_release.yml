@@ -56,7 +56,7 @@ on:
         description: 'Enable KPM functionality?'
         required: true
         type: boolean
-        default: false
+        default: true
       get_manager:
         description: 'Get the latest KSU Manager at the same time?'
         required: true
