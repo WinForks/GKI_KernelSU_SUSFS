@@ -237,7 +237,7 @@ jobs:
     env:
       REPO_OWNER: ShirkNeko
       REPO_NAME: GKI_KernelSU_SUSFS
-      GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "GKI Kernel: ${{ inputs.kernelsu_variant == 'Next' && 'KernelSU-' || '' }} ${{ inputs.kernelsu_variant }}"
       INITIAL_RELEASE_NOTES: |
         This release includes **${{ inputs.kernelsu_variant == 'Next' && 'KernelSU' || '' }}${{ inputs.kernelsu_variant }}, please note the KSU version here**, SUSFS v1.5.8, LZ4KD
@@ -282,7 +282,7 @@ jobs:
       - name: Generate and Create New Tag (Atomic)
         if: ${{ steps.release_check.outcome == 'success' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
@@ -543,12 +543,12 @@ jobs:
           prerelease: true
           release_name: ${{ env.RELEASE_NAME }}
           body: ${{ env.FULL_RELEASE_NOTES }}
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Upload Release Assets
         if: ${{ steps.release_check.outcome == 'success' }}
         env:
-          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Uploading release assets..."
           
