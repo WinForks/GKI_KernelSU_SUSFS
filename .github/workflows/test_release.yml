@@ -283,6 +283,7 @@ jobs:
         if: ${{ steps.release_check.outcome == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_PUSH: ${{ secrets.PAT_PUSH }}
         run: |
           set -e
 
@@ -323,7 +324,7 @@ jobs:
 
           # Create and push new tag
           git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
-          git push origin "$NEW_TAG"
+          git push https://$PAT_PUSH@github.com/${REPO_OWNER}/${REPO_NAME}.git "$NEW_TAG"
 
           echo "Tag $NEW_TAG created and pushed successfully" 
           
