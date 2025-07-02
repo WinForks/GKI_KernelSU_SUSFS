@@ -288,9 +288,11 @@ jobs:
 
           BASE_VERSION="v1.5.8"
           
-          # Fetch all existing tags using git ls-remote
+          # Fetch all existing tags using git ls-remote and also ensure local tags are up-to-date
+          git fetch --tags origin
+          
           EXISTING_TAGS=$(git ls-remote --tags https://github.com/$REPO_OWNER/$REPO_NAME.git | awk '{print $2}' | sed 's/refs\/tags\///' || true)
-
+          
           # Find highest revision number for this base version
           MAX_REVISION=0
           while IFS= read -r tag; do
@@ -301,16 +303,16 @@ jobs:
               fi
             fi
           done <<< "$EXISTING_TAGS"
-
+          
           # Generate new revision number and tag
           NEW_REVISION=$((MAX_REVISION + 1))
           NEW_TAG="$BASE_VERSION-r$NEW_REVISION"
-
+          
           echo "New tag generated: $NEW_TAG"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-
-          # Optional: Check if tag already exists in remote
-          if git ls-remote --exit-code --tags origin "$NEW_TAG" > /dev/null 2>&1; then
+          
+          # Double-check that the tag does not exist locally or remotely
+          if git show-ref --tags "$NEW_TAG" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "$NEW_TAG" > /dev/null 2>&1; then
             echo "::error::Tag '$NEW_TAG' already exists in remote repository. Aborting."
             exit 1
           fi
