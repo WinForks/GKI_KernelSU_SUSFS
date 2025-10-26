@@ -247,6 +247,8 @@ jobs:
       - name: Checkout code
         if: ${{ steps.release_check.outcome == 'success' }}
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install GitHub CLI
         if: ${{ steps.release_check.outcome == 'success' }}
