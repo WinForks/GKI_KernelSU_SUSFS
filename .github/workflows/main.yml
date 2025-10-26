@@ -1,0 +1,517 @@
+name: Test Release
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      android_version:
+        description: "Android版本"
+        required: true
+        type: choice
+        options:
+          - Android 12
+          - Android 13
+          - Android 14
+          - Android 15
+          - All
+        default: Android 12
+      kernelsu_branch:
+        description: "Select SukiSU branch"
+        required: true
+        type: choice
+        options:
+          - Stable
+          - Dev
+        default: Stable
+      use_kpm:
+        description: "是否开启KPM功能?"
+        required: true
+        type: boolean
+        default: true
+      use_zram:
+        description: "是否开启增加更多ZRAM算法?"
+        required: true
+        type: boolean
+        default: true
+      use_bbg:
+        description: "是否开启BBG防格机补丁?"
+        required: true
+        type: boolean
+        default: false
+      only_ak3:
+        description: "是否只构建AK3内核?"
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  get_manager:
+    uses: ./.github/workflows/get-manager.yml
+    secrets: inherit
+
+  build-kernel-a12-5-10:
+    if: ${{ inputs.android_version == 'Android 12' || inputs.android_version == 'All' }}
+    uses: ./.github/workflows/kernel-a12-5.10.yml
+    secrets: inherit
+    with:
+      use_zram: ${{ inputs.use_zram }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbg: ${{ inputs.use_bbg }}
+      onlyAk3: ${{ inputs.onlyAk3 }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+
+  build-kernel-a13-5-10:
+    if: ${{ inputs.android_version == 'Android 13' || inputs.android_version == 'All' }}
+    uses: ./.github/workflows/kernel-a13-5.10.yml
+    secrets: inherit
+    with:
+      use_zram: ${{ inputs.use_zram }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbg: ${{ inputs.use_bbg }}
+      onlyAk3: ${{ inputs.onlyAk3 }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+
+  build-kernel-a13-5-15:
+    if: ${{ inputs.android_version == 'Android 13' || inputs.android_version == 'All' }}
+    uses: ./.github/workflows/kernel-a13-5.15.yml
+    secrets: inherit
+    with:
+      use_zram: ${{ inputs.use_zram }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbg: ${{ inputs.use_bbg }}
+      onlyAk3: ${{ inputs.onlyAk3 }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+
+  build-kernel-a14-5-15:
+    if: ${{ inputs.android_version == 'Android 14' || inputs.android_version == 'All' }}
+    uses: ./.github/workflows/kernel-a14-5.15.yml
+    secrets: inherit
+    with:
+      use_zram: ${{ inputs.use_zram }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbg: ${{ inputs.use_bbg }}
+      onlyAk3: ${{ inputs.onlyAk3 }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+
+  build-kernel-a14-6-1:
+    if: ${{ inputs.android_version == 'Android 14' || inputs.android_version == 'All' }}
+    uses: ./.github/workflows/kernel-a14-6.1.yml
+    secrets: inherit
+    with:
+      use_zram: ${{ inputs.use_zram }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbg: ${{ inputs.use_bbg }}
+      onlyAk3: ${{ inputs.onlyAk3 }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+
+  build-kernel-a15-6-6:
+    if: ${{ inputs.android_version == 'Android 15' || inputs.android_version == 'All' }}
+    uses: ./.github/workflows/kernel-a15-6.6.yml
+    secrets: inherit
+    with:
+      use_zram: ${{ inputs.use_zram }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbg: ${{ inputs.use_bbg }}
+      onlyAk3: ${{ inputs.onlyAk3 }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+
+  check-build-status:
+    runs-on: ubuntu-latest
+    needs:
+      - get_manager
+      - build-kernel-a12-5-10
+      - build-kernel-a13-5-10
+      - build-kernel-a13-5-15
+      - build-kernel-a14-5-15
+      - build-kernel-a14-6-1
+      - build-kernel-a15-6-6
+    if: always()
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    env:
+      SHOULD_RUN_A12_5_10: ${{ contains(github.event.inputs.android_version, 'All') || contains(github.event.inputs.android_version, 'Android 12') }}
+      SHOULD_RUN_A13_5_10: ${{ contains(github.event.inputs.android_version, 'All') || contains(github.event.inputs.android_version, 'Android 13') }}
+      SHOULD_RUN_A13_5_15: ${{ contains(github.event.inputs.android_version, 'All') || contains(github.event.inputs.android_version, 'Android 13') }}
+      SHOULD_RUN_A14_5_15: ${{ contains(github.event.inputs.android_version, 'All') || contains(github.event.inputs.android_version, 'Android 14') }}
+      SHOULD_RUN_A14_6_1: ${{ contains(github.event.inputs.android_version, 'All') || contains(github.event.inputs.android_version, 'Android 14') }}
+      SHOULD_RUN_A15_6_6: ${{ contains(github.event.inputs.android_version, 'All') || contains(github.event.inputs.android_version, 'Android 15') }}
+
+      RESULT_GET_MANAGER: ${{ needs.get_manager.result }}
+      RESULT_A12_5_10: ${{ needs.build-kernel-a12-5-10.result }}
+      RESULT_A13_5_10: ${{ needs.build-kernel-a13-5-10.result }}
+      RESULT_A13_5_15: ${{ needs.build-kernel-a13-5-15.result }}
+      RESULT_A14_5_15: ${{ needs.build-kernel-a14-5-15.result }}
+      RESULT_A14_6_1: ${{ needs.build-kernel-a14-6-1.result }}
+      RESULT_A15_6_6: ${{ needs.build-kernel-a15-6-6.result }}
+    steps:
+      - name: Determine if release should proceed
+        id: check
+        run: |
+          SHOULD_PROCEED="true"
+          ERROR_MESSAGE=""
+
+          echo "--- Checking Job Statuses ---"
+          echo "get_manager result: $RESULT_GET_MANAGER"
+
+          # 1. Check get_manager job only if it was supposed to run
+          if [[ "${{ inputs.get_manager }}" == "true" ]]; then
+            if [[ "$RESULT_GET_MANAGER" != "success" ]]; then
+              SHOULD_PROCEED="false"
+              ERROR_MESSAGE+="get_manager job did not succeed (result: $RESULT_GET_MANAGER). "
+            fi
+          fi
+
+          # Function to check a kernel job
+          check_kernel_job() {
+            local kernel_id=$1
+            local should_run_flag=$2
+            local actual_result=$3
+
+            echo "Checking kernel $kernel_id (Should Run: $should_run_flag, Actual Result: $actual_result)..."
+
+            if [[ "$should_run_flag" == "true" ]]; then
+              if [[ "$actual_result" != "success" ]]; then
+                SHOULD_PROCEED="false"
+                ERROR_MESSAGE+="Job for $kernel_id was expected to run but did not succeed (result: $actual_result). "
+              fi
+            else
+              if [[ "$actual_result" == "failure" ]]; then
+                SHOULD_PROCEED="false"
+                ERROR_MESSAGE+="Job for $kernel_id was NOT expected to run but failed (result: $actual_result). This indicates a problem. "
+              fi
+            fi
+          }
+
+          check_kernel_job "a12-5.10" "$SHOULD_RUN_A12_5_10" "$RESULT_A12_5_10"
+          check_kernel_job "a13-5.10" "$SHOULD_RUN_A13_5_10" "$RESULT_A13_5_10"
+          check_kernel_job "a13-5.15" "$SHOULD_RUN_A13_5_15" "$RESULT_A13_5_15"
+          check_kernel_job "a14-5.15" "$SHOULD_RUN_A14_5_15" "$RESULT_A14_5_15"
+          check_kernel_job "a14-6.1" "$SHOULD_RUN_A14_6_1" "$RESULT_A14_6_1"
+          check_kernel_job "a15-6.6" "$SHOULD_RUN_A15_6_6" "$RESULT_A15_6_6"
+
+          echo "Final decision - SHOULD_PROCEED: $SHOULD_PROCEED"
+          echo "Accumulated Errors: $ERROR_MESSAGE"
+          echo "should_release=$SHOULD_PROCEED" >> "$GITHUB_OUTPUT"
+
+          if [[ "$SHOULD_PROCEED" == "false" ]]; then
+            echo "::error::Release blocked due to issues: $ERROR_MESSAGE"
+            exit 1
+          fi
+
+  trigger-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs:
+      - check-build-status
+      - get_manager
+    if: always()
+    env:
+      REPO_OWNER: WinForks
+      REPO_NAME: GKI_KernelSU_SUSFS
+      GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ${{ needs.get_manager.outputs.susVer }}"
+      INITIAL_RELEASE_NOTES: |
+        此处包含：SukiSU${{ inputs.kernelsu_branch == 'Dev(开发)' && format('({0})', needs.get_manager.outputs.ksuVer) || '稳定版' }}、SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}
+
+        默认功能:
+        - 增强隐藏环境 (VFS Hooks v1.5, Magic Mount支持, Ptrace补丁, Mountify支持)
+        - 网络功能增强优化配置 (IPSec, BBR v1, WireGuard)
+
+        可选功能:
+        - **KPM** ${{ inputs.use_kpm && '开启' || '未开启' }}
+        - **BBG防格机补丁** ${{ inputs.use_bbg && '开启' || '未开启' }}
+        - **LZ4 v1.10.0, LZ4KD, ONEPLUS_LZ4K** ${{ inputs.use_zram && '开启' || '未开启' }}
+
+        echo "LTO: thin" >> $GITHUB_ENV
+
+        附加工具:
+        - SukiSU管理器: https://github.com/SukiSU-Ultra/SukiSU-Ultra
+        - SUSFS4KSU模块: https://github.com/sidex15/ksu_module_susfs
+
+        备注：
+        - 点击下方 **[Assets]** 展开资源、底部还包含最新 **SukiSU管理器** 和 **SUSFS4KSU模块**
+    steps:
+      - name: Conditional Release Check
+        id: release_check
+        if: ${{ needs.check-build-status.outputs.should_release == 'true' }}
+        run: echo "Release conditions met. Proceeding with release."
+
+      - name: Checkout code
+        if: ${{ steps.release_check.outcome == 'success' }}
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          type -p gh >/dev/null || {
+            sudo apt update
+            sudo apt install -y gh
+          }
+
+      - name: Set branch for SukiSU
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          echo "KSU_BRANCH=main" >> $GITHUB_ENV
+
+      - name: 获取提交哈希值或标签并生成 URL 于 SukiSU 管理器
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          echo "This is the SukiSU variant"
+          REPO_URL="https://github.com/SukiSU-Ultra/SukiSU-Ultra.git"
+          REPO_URL2="SukiSU-Ultra/SukiSU-Ultra"
+
+          if [[ "${{ inputs.kernelsu_branch }}" == "Stable" ]]; then
+            # Fetch the latest tag
+            TAG=$(git ls-remote --tags --sort=-v:refname $REPO_URL | grep -o 'refs/tags/.*' | cut -d'/' -f3 | head -n1)
+            if [[ -z "$TAG" ]]; then
+              echo "Error: Could not fetch latest tag for Stable" >&2
+              exit 1
+            fi
+            KSU_REF=$TAG
+            KSU_URL="https://github.com/$REPO_URL2/releases/tag/$TAG"
+
+          elif [[ "${{ inputs.kernelsu_branch }}" == "Dev" ]]; then
+            # Fetch the latest commit from "next" branch
+            COMMIT_HASH=$(git ls-remote $REPO_URL refs/heads/$KSU_BRANCH | awk '{ print $1 }')
+            if [[ -z "$COMMIT_HASH" ]]; then
+              echo "Error: Could not fetch latest commit for Dev" >&2
+              exit 1
+            fi
+            KSU_REF=$COMMIT_HASH
+            KSU_URL="https://github.com/$REPO_URL2/commit/$COMMIT_HASH"
+          fi
+
+          # Echo the values to GitHub environment for later use
+          echo "KSU_REF=$KSU_REF" >> $GITHUB_ENV
+          echo "KSU_URL=$KSU_URL" >> $GITHUB_ENV
+          echo "KernelSU Reference: $KSU_REF"
+          echo "KernelSU URL: $KSU_URL"
+
+      - name: 获取提交哈希值并生成提交 URL
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          GITLAB_OWNER="simonpunk"
+          GITLAB_REPO="susfs4ksu"
+
+          declare -A BRANCH_MAP=(
+            ["gki_android12_5_10"]="gki-android12-5.10"
+            ["gki_android13_5_10"]="gki-android13-5.10"
+            ["gki_android13_5_15"]="gki-android13-5.15"
+            ["gki_android14_5_15"]="gki-android14-5.15"
+            ["gki_android14_6_1"]="gki-android14-6.1"
+            ["gki_android15_6_6"]="gki-android15-6.6"
+          )
+
+          for var_name in "${!BRANCH_MAP[@]}"; do
+            branch_name="${BRANCH_MAP[$var_name]}"
+            COMMIT_HASH=$(git ls-remote https://gitlab.com/$GITLAB_OWNER/$GITLAB_REPO.git refs/heads/$branch_name | awk '{ print $1 }')
+
+            if [[ -n "$COMMIT_HASH" ]]; then
+              COMMIT_URL="https://gitlab.com/$GITLAB_OWNER/$GITLAB_REPO/-/commit/$COMMIT_HASH"
+              echo "$branch_name Commit: $COMMIT_HASH"
+              echo "$branch_name Commit URL: $COMMIT_URL"
+
+              # Store commit hash and commit URL in GitHub environment
+              echo "COMMIT_HASH_${var_name}=$COMMIT_HASH" >> "$GITHUB_ENV"
+              echo "COMMIT_URL_${var_name}=$COMMIT_URL" >> "$GITHUB_ENV"
+            fi
+          done
+
+      - name: 将提交哈希值和链接添加到 `RELEASE_NOTES` 中，并将 KernelSU-Next 引用添加到 `RELEASE_NOTES` 中。
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "<details>" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "<summary>哈希值与链接</summary>" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "- **SukiSU管理**: [$KSU_REF]($KSU_URL)" >> $GITHUB_ENV
+          echo "- **SUSFS4KSU**:" >> $GITHUB_ENV
+
+          # 根据 inputs.android_version 选择性地添加对应的 GKI 行（或 All 时全部添加）
+          ANDROID_VERSION="${{ inputs.android_version }}"
+
+          if [ "$ANDROID_VERSION" = "Android 12" ] || [ "$ANDROID_VERSION" = "All" ]; then
+            echo "  - gki-android12-5.10: [$COMMIT_HASH_gki_android12_5_10]($COMMIT_URL_gki_android12_5_10)" >> $GITHUB_ENV
+          fi
+
+          if [ "$ANDROID_VERSION" = "Android 13" ] || [ "$ANDROID_VERSION" = "All" ]; then
+            echo "  - gki-android13-5.10: [$COMMIT_HASH_gki_android13_5_10]($COMMIT_URL_gki_android13_5_10)" >> $GITHUB_ENV
+            echo "  - gki-android13-5.15: [$COMMIT_HASH_gki_android13_5_15]($COMMIT_URL_gki_android13_5_15)" >> $GITHUB_ENV
+          fi
+
+          if [ "$ANDROID_VERSION" = "Android 14" ] || [ "$ANDROID_VERSION" = "All" ]; then
+            echo "  - gki-android14-5.15: [$COMMIT_HASH_gki_android14_5_15]($COMMIT_URL_gki_android14_5_15)" >> $GITHUB_ENV
+            echo "  - gki-android14-6.1: [$COMMIT_HASH_gki_android14_6_1]($COMMIT_URL_gki_android14_6_1)" >> $GITHUB_ENV
+          fi
+
+          if [ "$ANDROID_VERSION" = "Android 15" ] || [ "$ANDROID_VERSION" = "All" ]; then
+            echo "  - gki-android15-6.6: [$COMMIT_HASH_gki_android15_6_6]($COMMIT_URL_gki_android15_6_6)" >> $GITHUB_ENV
+          fi
+
+          echo "" >> $GITHUB_ENV
+          echo "</details>" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Generate and Create New Tag (Atomic, check HEAD first)
+        if: ${{ steps.release_check.outcome == 'success' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          BASE_VERSION="${{ needs.get_manager.outputs.susVer }}"
+          REMOTE="${REMOTE:-origin}"
+          MAX_ATTEMPTS="${MAX_ATTEMPTS:-10}"
+          SLEEP_MIN="${SLEEP_MIN:-0.5}"
+          SLEEP_MAX="${SLEEP_MAX:-1.5}"
+
+          # Resolve remote URL (fallback to https if remote name doesn't exist)
+          if git remote get-url "$REMOTE" >/dev/null 2>&1; then
+            REMOTE_URL="$(git remote get-url "$REMOTE")"
+          else
+            REMOTE_URL="https://github.com/${GITHUB_REPOSITORY}.git"
+          fi
+
+          # Get numeric highest revision for BASE_VERSION from provided tag lines
+          get_highest_rev_from_stream() {
+            # reads tag names from stdin
+            awk -v base="$BASE_VERSION" '
+              {
+                tag=$0
+                # match base-r<number>
+                pattern="^" base "-r([0-9]+)$"
+                if (match(tag, pattern, arr)) print arr[1]
+              }
+            ' | sort -n | tail -n1
+          }
+
+          # Query remote tags and return highest revision number (or empty)
+          get_max_revision_remote() {
+            git ls-remote --tags "$REMOTE_URL" 2>/dev/null \
+              | awk "{print \$2}" \
+              | sed 's@refs/tags/@@; s/\\^{}$//' \
+              | get_highest_rev_from_stream || true
+          }
+
+          # Check for a tag on current HEAD matching BASE_VERSION-r*
+          TAG_AT_HEAD="$(git tag --points-at HEAD --list "${BASE_VERSION}-r*" | sort -V | tail -n1 || true)"
+
+          if [[ -n "$TAG_AT_HEAD" && "$TAG_AT_HEAD" =~ ^${BASE_VERSION}-r([0-9]+)$ ]]; then
+            MAX_REVISION="${BASH_REMATCH[1]}"
+            echo "Found tag on HEAD: $TAG_AT_HEAD (rev $MAX_REVISION). Incrementing from HEAD."
+          else
+            echo "No matching tag on HEAD. Scanning remote tags..."
+            MAX_REVISION="$(get_max_revision_remote)"
+            MAX_REVISION="${MAX_REVISION:-0}"
+            echo "Current max remote revision for $BASE_VERSION: $MAX_REVISION"
+          fi
+
+          attempt=1
+          while (( attempt <= MAX_ATTEMPTS )); do
+            NEW_REVISION=$((MAX_REVISION + 1))
+            NEW_TAG="${BASE_VERSION}-r${NEW_REVISION}"
+            echo "Attempt #${attempt}: trying tag ${NEW_TAG}"
+
+            git config user.name "${GIT_USER_NAME:-GitHub Actions}"
+            git config user.email "${GIT_USER_EMAIL:-actions@github.com}"
+
+            # Create annotated tag locally (force to update any stale local copy)
+            git tag -f -a "$NEW_TAG" -m "Release $NEW_TAG"
+
+            if git push "$REMOTE" "refs/tags/$NEW_TAG:refs/tags/$NEW_TAG"; then
+              echo "Tag $NEW_TAG pushed successfully to $REMOTE"
+              if [[ -n "${GITHUB_ENV:-}" ]]; then
+                echo "NEW_TAG=$NEW_TAG" >> "$GITHUB_ENV"
+              else
+                echo "GITHUB_ENV not set; NEW_TAG: $NEW_TAG"
+              fi
+              exit 0
+            else
+              echo "Push failed (tag likely exists remotely). Cleaning local tag and refreshing max revision..."
+              git tag -d "$NEW_TAG" >/dev/null 2>&1 || true
+              git fetch --tags "$REMOTE" >/dev/null 2>&1 || true
+              MAX_REVISION="$(get_max_revision_remote)"
+              MAX_REVISION="${MAX_REVISION:-0}"
+              echo "Updated max revision from remote: $MAX_REVISION"
+
+              attempt=$((attempt + 1))
+              sleep_time=$(awk -v min="$SLEEP_MIN" -v max="$SLEEP_MAX" 'BEGIN{srand(); print min+rand()*(max-min)}')
+              printf "Sleeping %.2f seconds before retry...\n" "$sleep_time"
+              sleep "$sleep_time"
+            fi
+          done
+
+          echo "::error::Unable to find an available tag after ${MAX_ATTEMPTS} attempts. Aborting."
+          exit 1
+
+      - name: Download Artifacts
+        if: ${{ steps.release_check.outcome == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts-${{ github.run_id }}
+
+      - name: Prepare Artifacts for Upload
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          # Create a new directory for release assets
+          mkdir -p release-assets
+
+          # Find and copy all artifacts to a flat directory structure
+          find ./release-artifacts-${{ github.run_id }} -type f -exec cp -v {} ./release-assets \;
+
+          # Generate checksums
+          cd release-assets
+          sha256sum * > SHA256SUMS.txt
+          cd ..
+
+          echo "Artifacts prepared for upload:"
+          ls -lh ./release-assets
+
+      - name: Create GitHub Release
+        if: ${{ steps.release_check.outcome == 'success' }}
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          prerelease: false
+          release_name: ${{ env.RELEASE_NAME }}
+          body: ${{ env.FULL_RELEASE_NOTES }}
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+
+      - name: Upload KSU Manager & SUS4KSU Module
+        continue-on-error: true
+        run: |
+          echo "Uploading KSU管理器"
+          gh release upload ${{ env.NEW_TAG }} "./downloaded-artifacts/*Manager*/*"
+          gh release upload ${{ env.NEW_TAG }} "./downloaded-artifacts/susfs-*/*"
+
+      - name: Upload Release Assets
+        if: ${{ steps.release_check.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: |
+          echo "Uploading release assets..."
+
+          # Upload all files in the release-assets directory
+          for file in ./release-assets/*; do
+            echo "Uploading $file"
+            gh release upload "${{ env.NEW_TAG }}" "$file" || echo "Failed to upload $file"
+          done
+
+          echo "Upload completed!"
+
+      - name: Verify Uploaded Assets
+        if: ${{ steps.release_check.outcome == 'success' }}
+        run: |
+          echo "Uploaded assets:"
+          gh release view "${{ env.NEW_TAG }}" --json assets -q '.assets[].name'
