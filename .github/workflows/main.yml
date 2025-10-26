@@ -216,7 +216,7 @@ jobs:
     env:
       REPO_OWNER: WinForks
       REPO_NAME: GKI_KernelSU_SUSFS
-      GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ${{ needs.get_manager.outputs.susVer }}"
       INITIAL_RELEASE_NOTES: |
         此处包含：SukiSU${{ inputs.kernelsu_branch == 'Dev(开发)' && format('({0})', needs.get_manager.outputs.ksuVer) || '稳定版' }}、SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}
@@ -488,7 +488,7 @@ jobs:
           prerelease: false
           release_name: ${{ env.RELEASE_NAME }}
           body: ${{ env.FULL_RELEASE_NOTES }}
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload KSU Manager & SUS4KSU Module
         continue-on-error: true
@@ -500,7 +500,7 @@ jobs:
       - name: Upload Release Assets
         if: ${{ steps.release_check.outcome == 'success' }}
         env:
-          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Uploading release assets..."
 
