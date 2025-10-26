@@ -44,7 +44,7 @@ on:
         description: "是否开启BBG防格机补丁?"
         required: true
         type: boolean
-        default: false
+        default: true
       only_ak3:
         description: "是否只构建AK3内核?"
         required: true
