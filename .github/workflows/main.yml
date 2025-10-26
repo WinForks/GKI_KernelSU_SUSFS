@@ -64,7 +64,7 @@ jobs:
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      only_ak3: ${{ inputs.only_ak3 }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
 
   build-kernel-a13-5-10:
@@ -75,7 +75,7 @@ jobs:
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      only_ak3: ${{ inputs.only_ak3 }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
 
   build-kernel-a13-5-15:
@@ -86,7 +86,7 @@ jobs:
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      only_ak3: ${{ inputs.only_ak3 }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
 
   build-kernel-a14-5-15:
@@ -97,7 +97,7 @@ jobs:
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      only_ak3: ${{ inputs.only_ak3 }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
 
   build-kernel-a14-6-1:
@@ -108,7 +108,7 @@ jobs:
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      only_ak3: ${{ inputs.only_ak3 }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
 
   build-kernel-a15-6-6:
@@ -119,7 +119,7 @@ jobs:
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      only_ak3: ${{ inputs.only_ak3 }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
 
   check-build-status:
