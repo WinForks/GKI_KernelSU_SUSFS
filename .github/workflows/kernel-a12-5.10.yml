@@ -1,110 +1,90 @@
 name: Android 12 5.10
 permissions:
-  contents: write  # Allow writing to repository contents (for pushing tags)
-  actions: write   # Allows triggering actions
+  contents: write
+  actions: write
 
 on:
-  workflow_call:  # This allows this workflow to be called from another workflow
+  workflow_call:
     inputs:
-      make_release:
-        required: true
-        type: boolean
-        default: true
-      kernelsu_variant:
-        required: true
-        type: string
-        default: Next
       kernelsu_branch:
         required: true
         type: string
         default: Stable
-      # kernelsu_branch_other:
-      #   required: false
-      #   type: string
-      #   default: ""
-      version:
-        required: false
-        type: string
-        default: ""
       use_zram:
-        description: '是否开启增加更多ZRAM算法?'
         required: true
         type: boolean
         default: true
       use_kpm:
-        description: '是否开启KPM功能?'
         required: true
         type: boolean
         default: true
-      BBG:
-        description: '是否启用内核层面阻止对关键分区/设备节点的非法写入(LSM)？'
+      use_bbg:
         required: true
         type: boolean
         default: false
-  
+      only_ak3:
+        required: false
+        type: boolean
+        default: false
+
 jobs:
   build-kernel-a12-5-10-kernelsu-susfs:
     strategy:
       fail-fast: false
       matrix:
         include:
-        #- sub_level: "66"
-        #  os_patch_level: "2022-01"
-        #  revision: "r11"
-        #- sub_level: "81"
-        #  os_patch_level: "2022-03"
-        #  revision: "r11"
-        #- sub_level: "101"
-        #  os_patch_level: "2022-04"
-        #  revision: "r28"
-        - sub_level: "136"
-          os_patch_level: "2022-11"
-          revision: "r15"
-        #- sub_level: "168"
-        #  os_patch_level: "2023-04"
-        #  revision: "r9"
-        - sub_level: "198"
-          os_patch_level: "2024-01"
-          revision: "r17"
-        #- sub_level: "205"
-        #  os_patch_level: "2024-03"
-        #  revision: "r9"
-        - sub_level: "209"
-          os_patch_level: "2024-05"
-          revision: "r13"
-        #- sub_level: "218"
-        #  os_patch_level: "2024-08"
-        #  revision: "r14"
-        #- sub_level: "226"
-        #  os_patch_level: "2024-11"
-        #  revision: "r8"
-        #- sub_level: "233"
-        #  os_patch_level: "2025-02"
-        #   revision: "r1"
-        #- sub_level: "236"
-        #  os_patch_level: "2025-05"
-        #  revision: "r1"
-        #- sub_level: "240"
-        #  os_patch_level: "2025-09"
-        #  revision: "r1"
-        - sub_level: "X"
-          os_patch_level: "lts"
-          revision: "r1"
-    uses: ./.github/workflows/gki-kernel.yml
+          #- sub_level: "66"
+          #  os_patch_level: "2022-01"
+          #  revision: "r11"
+          #- sub_level: "81"
+          #  os_patch_level: "2022-03"
+          #  revision: "r11"
+          #- sub_level: "101"
+          #  os_patch_level: "2022-04"
+          #  revision: "r28"
+          - sub_level: "136"
+            os_patch_level: "2022-11"
+            revision: "r15"
+          #- sub_level: "168"
+          #  os_patch_level: "2023-04"
+          #  revision: "r9"
+          - sub_level: "198"
+            os_patch_level: "2024-01"
+            revision: "r17"
+          #- sub_level: "205"
+          #  os_patch_level: "2024-03"
+          #  revision: "r9"
+          - sub_level: "209"
+            os_patch_level: "2024-05"
+            revision: "r13"
+          #- sub_level: "218"
+          #  os_patch_level: "2024-08"
+          #  revision: "r14"
+          #- sub_level: "226"
+          #  os_patch_level: "2024-11"
+          #  revision: "r8"
+          #- sub_level: "233"
+          #  os_patch_level: "2025-02"
+          #   revision: "r1"
+          #- sub_level: "236"
+          #  os_patch_level: "2025-05"
+          #  revision: "r1"
+          #- sub_level: "240"
+          #  os_patch_level: "2025-09"
+          #  revision: "r1"
+          - sub_level: "X"
+            os_patch_level: "lts"
+            revision: "r1"
+    uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
-      make_release: ${{ inputs.make_release || false }}
       android_version: "android12"
       kernel_version: "5.10"
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       revision: ${{ matrix.revision }}
-      kernelsu_variant: ${{ inputs.kernelsu_variant || 'Next' }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch || 'Dev' }}
-      # kernelsu_branch_other: ${{ inputs.kernelsu_branch_other || '' }}
-      version: ${{ inputs.version || '' }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch || 'Stable' }}
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
-      supp_op: ${{ inputs.supp_op || false }}
-      BBG: ${{ inputs.BBG || false }}
-
+      use_bbg: ${{ inputs.use_bbg || false }}
+      only_ak3: ${{ inputs.only_ak3 || false }}

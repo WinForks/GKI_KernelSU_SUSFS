@@ -1,43 +1,32 @@
 name: Android 13 5.15
 permissions:
-  contents: write  # Allow writing to repository contents (for pushing tags)
-  actions: write   # Allows triggering actions
+  contents: write
+  actions: write
 
 on:
-  workflow_call:  # This allows this workflow to be called from another workflow
+  workflow_call:
     inputs:
-      make_release:
-        required: true
-        type: boolean
-        default: true
-      kernelsu_variant:
-        required: true
-        type: string
-        default: Next
       kernelsu_branch:
         required: true
         type: string
         default: Stable
-      version:
-        required: false
-        type: string
-        default: ""
       use_zram:
-        description: '是否开启增加更多ZRAM算法?'
         required: true
         type: boolean
         default: true
       use_kpm:
-        description: '是否开启KPM功能?'
         required: true
         type: boolean
         default: true
-      BBG:
-        description: '是否启用内核层面阻止对关键分区/设备节点的非法写入(LSM)？'
+      use_bbg:
         required: true
         type: boolean
         default: false
-  
+      only_ak3:
+        required: false
+        type: boolean
+        default: false
+
 jobs:
   build-kernel-a13-5-15-kernelsu-susfs:
     strategy:
@@ -75,18 +64,16 @@ jobs:
             os_patch_level: "2025-09"
           #- sub_level: "X"
           #  os_patch_level: "lts"
-    uses: ./.github/workflows/gki-kernel.yml
+    uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
-      make_release: ${{ inputs.make_release || false }}
       android_version: "android13"
       kernel_version: "5.15"
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
-      kernelsu_variant: ${{ inputs.kernelsu_variant || 'Next' }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch || 'Dev' }}
-      version: ${{ inputs.version || '' }}
+      revision: ${{ matrix.revision }}
+      kernelsu_branch: ${{ inputs.kernelsu_branch || 'Stable' }}
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
-      supp_op: ${{ inputs.supp_op || false }}
-      BBG: ${{ inputs.BBG || false }}
+      use_bbg: ${{ inputs.use_bbg || false }}
+      only_ak3: ${{ inputs.only_ak3 || false }}
