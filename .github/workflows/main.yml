@@ -235,25 +235,24 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}"
       RELEASE_NOTES: |
-        默认功能:
+        ## 默认功能
         - 增强隐藏环境补丁 (VFS Hooks, Magic Mount, Ptrace, Mountify)
         - 网络功能增强优化配置 (IPSec, BBR v1, WireGuard)
-        - O3编译优化配置
+        - O3编译优化配置 (提升性能，优化代码执行效率)
+        - ThinLTO链接时优化 (减少二进制大小，提升性能)
 
-        可选功能:
+        ##可选功能
         - **KPM** ${{ inputs.use_kpm && '开启' || '未开启' }}
         - **BBG防格机补丁** ${{ inputs.use_bbg && '开启' || '未开启' }}
         - **LZ4 v1.10.0, LZ4KD, ONEPLUS_LZ4K** ${{ inputs.use_zram && '开启' || '未开启' }}
         - **LXC** ${{ inputs.lxc_enable && '开启' || '未开启' }}
         - **Schedhorizon调度** ${{ inputs.schedhorizon_enable && '开启' || '未开启' }}
 
-        echo "LTO: thin" >> $GITHUB_ENV
-
-        附加工具:
+        ## 附加工具
         - SukiSU管理器: https://github.com/SukiSU-Ultra/SukiSU-Ultra
         - SUSFS4KSU模块: https://github.com/sidex15/ksu_module_susfs
 
-        备注：
+        ## 备注
         - 点击下方 **[Assets]** 展开资源、底部还包含最新 **SukiSU管理器** 和 **SUSFS4KSU模块**
 
     steps:
@@ -288,20 +287,27 @@ jobs:
           REPO_URL="https://github.com/SukiSU-Ultra/SukiSU-Ultra.git"
           REPO_URL2="SukiSU-Ultra/SukiSU-Ultra"
 
-          # Fetch the latest tag for Stable branch
-          TAG=$(git ls-remote --tags --sort=-v:refname $REPO_URL | grep -o 'refs/tags/.*' | cut -d'/' -f3 | head -n1)
+          # Fetch the latest tag and its commit hash
+          TAG_INFO=$(git ls-remote --tags --sort=-v:refname $REPO_URL | head -n1)
+          TAG=$(echo "$TAG_INFO" | grep -o 'refs/tags/.*' | cut -d'/' -f3)
+          COMMIT_HASH=$(echo "$TAG_INFO" | cut -f1)
+
           if [[ -z "$TAG" ]]; then
             echo "Error: Could not fetch latest tag for Stable" >&2
             exit 1
           fi
-          KSU_REF=$TAG
-          KSU_URL="https://github.com/$REPO_URL2/releases/tag/$TAG"
+
+          KSU_REF=$COMMIT_HASH
+          KSU_URL="https://github.com/$REPO_URL2/commit/$COMMIT_HASH"
+          KSU_TAG=$TAG
 
           # Echo the values to GitHub environment for later use
           echo "KSU_REF=$KSU_REF" >> $GITHUB_ENV
           echo "KSU_URL=$KSU_URL" >> $GITHUB_ENV
+          echo "KSU_TAG=$KSU_TAG" >> $GITHUB_ENV
           echo "KernelSU Reference: $KSU_REF"
           echo "KernelSU URL: $KSU_URL"
+          echo "KernelSU Tag: $KSU_TAG"
 
       - name: 获取提交哈希值并生成提交 URL
         if: ${{ steps.release_check.outcome == 'success' }}
@@ -343,28 +349,29 @@ jobs:
           echo "" >> $GITHUB_ENV
           echo "<summary>哈希值与链接</summary>" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
-          echo "- **SukiSU管理**: [$KSU_REF]($KSU_URL)" >> $GITHUB_ENV
-          echo "- **SUSFS4KSU**:" >> $GITHUB_ENV
+          echo "| 项目 | 版本 / 分支 | 哈希值 (点击跳转) |" >> $GITHUB_ENV
+          echo "|------|-------------|-------------------|" >> $GITHUB_ENV
+          echo "| SukiSU管理 | $KSU_TAG | [$KSU_REF]($KSU_URL) |" >> $GITHUB_ENV
 
           # 根据 inputs.android_version 选择性地添加对应的 GKI 行（或 All 时全部添加）
           ANDROID_VERSION="${{ inputs.android_version }}"
 
           if [ "$ANDROID_VERSION" = "Android 12" ] || [ "$ANDROID_VERSION" = "All" ]; then
-            echo "  - gki-android12-5.10: [$COMMIT_HASH_gki_android12_5_10]($COMMIT_URL_gki_android12_5_10)" >> $GITHUB_ENV
+            echo "| SUSFS4KSU | gki-android12-5.10 | [$COMMIT_HASH_gki_android12_5_10]($COMMIT_URL_gki_android12_5_10) |" >> $GITHUB_ENV
           fi
 
           if [ "$ANDROID_VERSION" = "Android 13" ] || [ "$ANDROID_VERSION" = "All" ]; then
-            echo "  - gki-android13-5.10: [$COMMIT_HASH_gki_android13_5_10]($COMMIT_URL_gki_android13_5_10)" >> $GITHUB_ENV
-            echo "  - gki-android13-5.15: [$COMMIT_HASH_gki_android13_5_15]($COMMIT_URL_gki_android13_5_15)" >> $GITHUB_ENV
+            echo "| SUSFS4KSU | gki-android13-5.10 | [$COMMIT_HASH_gki_android13_5_10]($COMMIT_URL_gki_android13_5_10) |" >> $GITHUB_ENV
+            echo "| SUSFS4KSU | gki-android13-5.15 | [$COMMIT_HASH_gki_android13_5_15]($COMMIT_URL_gki_android13_5_15) |" >> $GITHUB_ENV
           fi
 
           if [ "$ANDROID_VERSION" = "Android 14" ] || [ "$ANDROID_VERSION" = "All" ]; then
-            echo "  - gki-android14-5.15: [$COMMIT_HASH_gki_android14_5_15]($COMMIT_URL_gki_android14_5_15)" >> $GITHUB_ENV
-            echo "  - gki-android14-6.1: [$COMMIT_HASH_gki_android14_6_1]($COMMIT_URL_gki_android14_6_1)" >> $GITHUB_ENV
+            echo "| SUSFS4KSU | gki-android14-5.15 | [$COMMIT_HASH_gki_android14_5_15]($COMMIT_URL_gki_android14_5_15) |" >> $GITHUB_ENV
+            echo "| SUSFS4KSU | gki-android14-6.1 | [$COMMIT_HASH_gki_android14_6_1]($COMMIT_URL_gki_android14_6_1) |" >> $GITHUB_ENV
           fi
 
           if [ "$ANDROID_VERSION" = "Android 15" ] || [ "$ANDROID_VERSION" = "All" ]; then
-            echo "  - gki-android15-6.6: [$COMMIT_HASH_gki_android15_6_6]($COMMIT_URL_gki_android15_6_6)" >> $GITHUB_ENV
+            echo "| SUSFS4KSU | gki-android15-6.6 | [$COMMIT_HASH_gki_android15_6_6]($COMMIT_URL_gki_android15_6_6) |" >> $GITHUB_ENV
           fi
 
           echo "" >> $GITHUB_ENV
@@ -478,11 +485,6 @@ jobs:
           # Copy only ZIP files and APK files, not extracted contents
           find ./release-artifacts-${{ github.run_id }} -name "*.zip" -exec cp -v {} ./release-assets \;
           find ./release-artifacts-${{ github.run_id }} -name "*.apk" -exec cp -v {} ./release-assets \;
-
-          # Generate checksums
-          cd release-assets
-          sha256sum * > SHA256SUMS.txt
-          cd ..
 
           echo "Artifacts prepared for upload:"
           ls -lh ./release-assets
