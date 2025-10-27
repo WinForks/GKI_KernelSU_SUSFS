@@ -475,8 +475,9 @@ jobs:
           # Create a new directory for release assets
           mkdir -p release-assets
 
-          # Find and copy all artifacts to a flat directory structure
-          find ./release-artifacts-${{ github.run_id }} -type f -exec cp -v {} ./release-assets \;
+          # Copy only ZIP files and APK files, not extracted contents
+          find ./release-artifacts-${{ github.run_id }} -name "*.zip" -exec cp -v {} ./release-assets \;
+          find ./release-artifacts-${{ github.run_id }} -name "*.apk" -exec cp -v {} ./release-assets \;
 
           # Generate checksums
           cd release-assets
@@ -496,5 +497,5 @@ jobs:
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: "./release-artifacts-${{ github.run_id }}/SukiSU_kernel-*,./downloaded-artifacts/*Manager*/*.apk,./downloaded-artifacts/susfs-*.zip"
+          artifacts: "./release-assets/*"
           replacesArtifacts: true
