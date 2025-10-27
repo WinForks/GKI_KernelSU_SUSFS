@@ -6,10 +6,6 @@ permissions:
 on:
   workflow_call:
     inputs:
-      kernelsu_branch:
-        required: true
-        type: string
-        default: Stable
       use_zram:
         required: true
         type: boolean
@@ -19,6 +15,14 @@ on:
         type: boolean
         default: true
       use_bbg:
+        required: true
+        type: boolean
+        default: false
+      lxc_enable:
+        required: true
+        type: boolean
+        default: false
+      schedhorizon_enable:
         required: true
         type: boolean
         default: false
@@ -55,7 +59,7 @@ jobs:
           #  os_patch_level: "2025-05"
           - sub_level: "X"
             os_patch_level: "lts"
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/gki-build.yml
     secrets: inherit
     with:
       android_version: "android14"
@@ -63,8 +67,9 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       revision: ${{ matrix.revision }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch || 'Stable' }}
       use_zram: ${{ inputs.use_zram }}
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg || false }}
       only_ak3: ${{ inputs.only_ak3 || false }}
+      lxc_enable: ${{ inputs.lxc_enable || false }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable || false }}

@@ -6,10 +6,6 @@ permissions:
 on:
   workflow_call:
     inputs:
-      make_release:
-        required: false
-        type: boolean
-        default: true
       android_version:
         required: true
         type: string
@@ -22,21 +18,9 @@ on:
       os_patch_level:
         required: true
         type: string
-      kernelsu_variant:
-        required: false
-        type: string
-        default: SukiSU
-      kernelsu_branch:
-        required: false
-        type: string
-        default: Stable
       revision:
         required: false
         type: string
-      version:
-        required: false
-        type: string
-        default: ""
       use_zram:
         required: true
         type: boolean
@@ -49,14 +33,18 @@ on:
         required: true
         type: boolean
         default: true
+      lxc_enable:
+        required: true
+        type: boolean
+        default: false
+      schedhorizon_enable:
+        required: true
+        type: boolean
+        default: false
       only_ak3:
         required: true
         type: boolean
         default: false
-      build_time:
-        required: false
-        type: string
-        default: ""
 
 jobs:
   build-kernel-kernelsu-susfs:
@@ -212,23 +200,6 @@ jobs:
             patch -p1 < fix_5.15.legacy.patch
           fi
 
-      - name: 确定 KernelSU 的分支
-        run: |
-          branch_input="${{ inputs.kernelsu_branch }}"
-
-          case "$branch_input" in
-            "Stable")
-              echo "BRANCH=-s susfs-main" >> $GITHUB_ENV
-              ;;
-            "Dev")
-              echo "BRANCH=-s susfs-test" >> $GITHUB_ENV
-              ;;
-            *)
-              echo "错误：需要自定义分支时未提供或收到未知分支参数 '$branch_input'" >&2
-              exit 1
-              ;;
-          esac
-
       - name: Apply ptrace patch for older kernels
         run: |
           cd "$CONFIG/common"
@@ -240,7 +211,7 @@ jobs:
           cd "$CONFIG" || { echo "无法切换到目录: $CONFIG" >&2; exit 1; }
 
           echo "添加 SukiSU..."
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash $BRANCH
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 
       - name: 添加 Baseband-guard 支持
         if: ${{ github.event.inputs.use_bbg == 'true' }}
@@ -287,6 +258,36 @@ jobs:
             patch -p1 < fdinfo.c.patch
           else
             patch -p1 --fuzz=3 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
+          fi
+
+      - name: 添加schedhorizon调速器
+        run: |
+          if [[ "${{ github.event.inputs.schedhorizon_enable }}" == "true" ]]; then
+            echo "更改为配置目录: $CONFIG..."
+            cd "$CONFIG/common"
+            echo "下载相关文件"
+            curl -LSs https://raw.githubusercontent.com/Tools-cx-app/ztc_build_action/main/patches/schedhorizon/cpufreq_schedhorizon.c -o kernel/sched/cpufreq_schedhorizon.c
+            #curl -LSs https://raw.githubusercontent.com/Tools-cx-app/esk_build_action/main/patches/schedhorizon/sched.h -o kernel/sched/sched.h
+            echo "写入补丁"
+            echo "obj-\$(CONFIG_CPU_FREQ_GOV_SCHEDHORIZON) += cpufreq_schedhorizon.o" >> kernel/sched/Makefile
+          fi
+
+      - name: 添加lxc
+        run: |
+          if [[ "${{ github.event.inputs.better_net }}" == "true" ]]; then
+            echo "更改为配置目录: $CONFIG..."
+            cd "$CONFIG/common"
+            echo "下载相关文件"
+            curl -LSs https://raw.githubusercontent.com/Tools-cx-app/ztc_build_action/main/patches/lxc/lxc_support.patch -o lxc.patch
+            echo "开始patch"
+            if [ -e "drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/context/mali_kbase_context.c" ]; then
+              patch -p1 --forward --fuzz=3 < lxc.patch
+            else
+              sed -i '/^diff --git.*mali_kbase_context\.c$/,/^diff --git/{
+                /^diff --git/!d
+              }' lxc.patch
+              patch -p1 --forward --fuzz=3 < lxc.patch
+            fi
           fi
 
       - name: 一些修复补丁
@@ -493,6 +494,8 @@ jobs:
           echo "CONFIG_IP_NF_TARGET_TTL=y" >> "$defconfig"
           echo "CONFIG_IP6_NF_TARGET_HL=y" >> "$defconfig"
           echo "CONFIG_IP6_NF_MATCH_HL=y" >> "$defconfig"
+          echo "CONFIG_IP6_NF_NAT=y" >> "$defconfig"
+          echo "CONFIG_IP6_NF_TARGET_MASQUERADE=y" >> "$defconfig"
 
           #启用  BPF 流解析器,实现高性能网络流量处理,增强网络监控和分析能力
           echo "CONFIG_BPF_STREAM_PARSER=y" >> "$defconfig"
@@ -562,8 +565,8 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$defconfig"
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "$defconfig"
 
-          # 开启O2编译优化配置
-          echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$defconfig"
+          # 开启O3编译优化配置
+          echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y" >> "$defconfig"
 
           # Remove check_defconfig
           sed -i 's/check_defconfig//' ./common/build.config.gki
@@ -573,13 +576,7 @@ jobs:
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
 
-          if [ ! -z ${{ inputs.version }} ]; then
-            echo "版本号不为空"
-            sed -i '$s|echo "\$res"|echo "${{ inputs.version }}"|' ./common/scripts/setlocalversion
-          else
-            echo "版本号为空，使用默认值"
-            sed -i '$s|echo "\$res"|echo "\$res-zakozakoooooo-1145141919"|' ./common/scripts/setlocalversion
-          fi
+          sed -i '$s|echo "\$res"|echo "\$res"|' ./common/scripts/setlocalversion
 
           # 如果你需要改构建时间,请把以下变量 CURRENT_TIME 修改为如下例子字符串,如:CURRENT_TIME="Sat Jun 07 06:29:29 UTC 2025"
           # 该字符串表示 UTC时间: 2025年6月7日 06:29:29,"Sat" 是星期六的缩写，而 "Jun" 是六月的缩写
@@ -602,9 +599,6 @@ jobs:
             rm -rf ./common/android/abi_gki_protected_exports_*
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
             # sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1"/' ./common/arch/arm64/configs/gki_defconfig
-            if [ ! -z ${{ inputs.version }} ]; then
-              sed -i '/^CONFIG_LOCALVERSION=/ s/="\([^"]*\)"/="${{ inputs.version }}"/' ./common/arch/arm64/configs/gki_defconfig
-            fi
           fi
 
       - name: Build with retry
@@ -634,7 +628,7 @@ jobs:
             ccache --show-stats
 
       - name: 修补 Image 文件 安卓12和安卓13(仅限sukisu)
-        if: ${{ inputs.use_kpm && inputs.kernelsu_variant == 'SukiSU' && (inputs.android_version == 'android12' || inputs.android_version == 'android13') }}
+        if: ${{ inputs.use_kpm && (inputs.android_version == 'android12' || inputs.android_version == 'android13') }}
         run: |
           if [ "${{ inputs.kernel_version }}" != "6.6" ]; then
             echo "Patching Image file..."
@@ -648,7 +642,7 @@ jobs:
           fi
 
       - name: 修补 Image 文件 安卓14和安卓15(仅限sukisu)
-        if: ${{ inputs.use_kpm && inputs.kernelsu_variant == 'SukiSU' && (inputs.android_version == 'android14' || inputs.android_version == 'android15') }}
+        if: ${{ inputs.use_kpm && (inputs.android_version == 'android14' || inputs.android_version == 'android15') }}
         run: |
           if [ "${{ inputs.kernel_version }}" != "6.6" ]; then
             echo "Patching Image file..."
@@ -792,7 +786,7 @@ jobs:
         if: ${{ !inputs.only_ak3 }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.kernelsu_variant }}_kernel-${{ env.CONFIG }}
+          name: SukiSU_kernel-${{ env.CONFIG }}
           path: |
             *AnyKernel3.zip
             *.img
@@ -801,6 +795,6 @@ jobs:
         if: ${{ inputs.only_ak3 }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.kernelsu_variant }}_kernel-${{ env.CONFIG }}
+          name: SukiSU_kernel-${{ env.CONFIG }}
           path: |
             *AnyKernel3.zip

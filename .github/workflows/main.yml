@@ -45,6 +45,16 @@ on:
         required: true
         type: boolean
         default: true
+      lxc_enable:
+        description: "是否开启lxc"
+        required: true
+        type: boolean
+        default: true
+      schedhorizon_enable:
+        description: "是否移植Schedhorizon调速器"
+        required: true
+        type: boolean
+        default: true
       only_ak3:
         description: "是否只构建AK3内核?"
         required: true
@@ -65,7 +75,8 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+      lxc_enable: ${{ inputs.lxc_enable }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a13-5-10:
     if: ${{ inputs.android_version == 'Android 13' || inputs.android_version == 'All' }}
@@ -76,7 +87,8 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+      lxc_enable: ${{ inputs.lxc_enable }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a13-5-15:
     if: ${{ inputs.android_version == 'Android 13' || inputs.android_version == 'All' }}
@@ -87,7 +99,8 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+      lxc_enable: ${{ inputs.lxc_enable }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a14-5-15:
     if: ${{ inputs.android_version == 'Android 14' || inputs.android_version == 'All' }}
@@ -98,7 +111,8 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+      lxc_enable: ${{ inputs.lxc_enable }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a14-6-1:
     if: ${{ inputs.android_version == 'Android 14' || inputs.android_version == 'All' }}
@@ -109,7 +123,8 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+      lxc_enable: ${{ inputs.lxc_enable }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a15-6-6:
     if: ${{ inputs.android_version == 'Android 15' || inputs.android_version == 'All' }}
@@ -120,7 +135,8 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
+      lxc_enable: ${{ inputs.lxc_enable }}
+      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   check-build-status:
     runs-on: ubuntu-latest
@@ -217,18 +233,19 @@ jobs:
       REPO_OWNER: WinForks
       REPO_NAME: GKI_KernelSU_SUSFS
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ${{ needs.get_manager.outputs.susVer }}"
-      INITIAL_RELEASE_NOTES: |
-        此处包含：SukiSU${{ inputs.kernelsu_branch == 'Dev(开发)' && format('({0})', needs.get_manager.outputs.ksuVer) || '稳定版' }}、SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}
-
+      RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}"
+      RELEASE_NOTES: |
         默认功能:
-        - 增强隐藏环境 (VFS Hooks v1.5, Magic Mount支持, Ptrace补丁, Mountify支持)
+        - 增强隐藏环境补丁 (VFS Hooks, Magic Mount, Ptrace, Mountify)
         - 网络功能增强优化配置 (IPSec, BBR v1, WireGuard)
+        - O3编译优化配置
 
         可选功能:
         - **KPM** ${{ inputs.use_kpm && '开启' || '未开启' }}
         - **BBG防格机补丁** ${{ inputs.use_bbg && '开启' || '未开启' }}
         - **LZ4 v1.10.0, LZ4KD, ONEPLUS_LZ4K** ${{ inputs.use_zram && '开启' || '未开启' }}
+        - **LXC** ${{ inputs.lxc_enable && '开启' || '未开启' }}
+        - **Schedhorizon调度** ${{ inputs.schedhorizon_enable && '开启' || '未开启' }}
 
         echo "LTO: thin" >> $GITHUB_ENV
 
@@ -238,6 +255,7 @@ jobs:
 
         备注：
         - 点击下方 **[Assets]** 展开资源、底部还包含最新 **SukiSU管理器** 和 **SUSFS4KSU模块**
+
     steps:
       - name: Conditional Release Check
         id: release_check
@@ -270,26 +288,14 @@ jobs:
           REPO_URL="https://github.com/SukiSU-Ultra/SukiSU-Ultra.git"
           REPO_URL2="SukiSU-Ultra/SukiSU-Ultra"
 
-          if [[ "${{ inputs.kernelsu_branch }}" == "Stable" ]]; then
-            # Fetch the latest tag
-            TAG=$(git ls-remote --tags --sort=-v:refname $REPO_URL | grep -o 'refs/tags/.*' | cut -d'/' -f3 | head -n1)
-            if [[ -z "$TAG" ]]; then
-              echo "Error: Could not fetch latest tag for Stable" >&2
-              exit 1
-            fi
-            KSU_REF=$TAG
-            KSU_URL="https://github.com/$REPO_URL2/releases/tag/$TAG"
-
-          elif [[ "${{ inputs.kernelsu_branch }}" == "Dev" ]]; then
-            # Fetch the latest commit from "next" branch
-            COMMIT_HASH=$(git ls-remote $REPO_URL refs/heads/$KSU_BRANCH | awk '{ print $1 }')
-            if [[ -z "$COMMIT_HASH" ]]; then
-              echo "Error: Could not fetch latest commit for Dev" >&2
-              exit 1
-            fi
-            KSU_REF=$COMMIT_HASH
-            KSU_URL="https://github.com/$REPO_URL2/commit/$COMMIT_HASH"
+          # Fetch the latest tag for Stable branch
+          TAG=$(git ls-remote --tags --sort=-v:refname $REPO_URL | grep -o 'refs/tags/.*' | cut -d'/' -f3 | head -n1)
+          if [[ -z "$TAG" ]]; then
+            echo "Error: Could not fetch latest tag for Stable" >&2
+            exit 1
           fi
+          KSU_REF=$TAG
+          KSU_URL="https://github.com/$REPO_URL2/releases/tag/$TAG"
 
           # Echo the values to GitHub environment for later use
           echo "KSU_REF=$KSU_REF" >> $GITHUB_ENV
@@ -482,38 +488,13 @@ jobs:
 
       - name: Create GitHub Release
         if: ${{ steps.release_check.outcome == 'success' }}
-        uses: actions/create-release@v1
+        uses: ncipollo/release-action@v1.20.0
         with:
-          tag_name: ${{ env.NEW_TAG }}
+          tag: ${{ env.NEW_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          body: ${{ env.RELEASE_NOTES }}
+          draft: false
           prerelease: false
-          release_name: ${{ env.RELEASE_NAME }}
-          body: ${{ env.FULL_RELEASE_NOTES }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload KSU Manager & SUS4KSU Module
-        continue-on-error: true
-        run: |
-          echo "Uploading KSU管理器"
-          gh release upload ${{ env.NEW_TAG }} "./downloaded-artifacts/*Manager*/*"
-          gh release upload ${{ env.NEW_TAG }} "./downloaded-artifacts/susfs-*/*"
-
-      - name: Upload Release Assets
-        if: ${{ steps.release_check.outcome == 'success' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Uploading release assets..."
-
-          # Upload all files in the release-assets directory
-          for file in ./release-assets/*; do
-            echo "Uploading $file"
-            gh release upload "${{ env.NEW_TAG }}" "$file" || echo "Failed to upload $file"
-          done
-
-          echo "Upload completed!"
-
-      - name: Verify Uploaded Assets
-        if: ${{ steps.release_check.outcome == 'success' }}
-        run: |
-          echo "Uploaded assets:"
-          gh release view "${{ env.NEW_TAG }}" --json assets -q '.assets[].name'
+          artifacts: "./release-artifacts-${{ github.run_id }}/SukiSU_kernel-*,./downloaded-artifacts/*Manager*/*.apk,./downloaded-artifacts/susfs-*.zip"
+          replacesArtifacts: true
