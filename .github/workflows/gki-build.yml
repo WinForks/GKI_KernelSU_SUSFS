@@ -497,10 +497,10 @@ jobs:
           echo "CONFIG_IP6_NF_NAT=y" >> "$defconfig"
           echo "CONFIG_IP6_NF_TARGET_MASQUERADE=y" >> "$defconfig"
 
-          #启用  BPF 流解析器,实现高性能网络流量处理,增强网络监控和分析能力
+          # BPF 流解析器
           echo "CONFIG_BPF_STREAM_PARSER=y" >> "$defconfig"
 
-          #开启增强 Netfilter 防火墙扩展模块,支持基于地址类型的匹配规则,启用 IP 集合支持,提高防火墙规则灵活性,支持更复杂的流量过滤策略
+          # Netfilter 防火墙扩展模块
           echo "CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y" >> "$defconfig"
           echo "CONFIG_NETFILTER_XT_SET=y" >> "$defconfig"
 
@@ -509,6 +509,7 @@ jobs:
           echo "CONFIG_NET_SCH_FQ=y" >> "$defconfig"
           echo "CONFIG_NET_SCH_FQ_CODEL=y" >> "$defconfig"
           echo "CONFIG_TCP_CONG_BBR=y" >> "$defconfig"
+          echo "CONFIG_DEFAULT_TCP_CONG=bbr" >> "$defconfig"
           echo "CONFIG_TCP_CONG_CUBIC=y" >> "$defconfig"
           echo "CONFIG_TCP_CONG_RENO=y" >> "$defconfig"
           echo "CONFIG_TCP_CONG_BIC=y" >> "$defconfig"
