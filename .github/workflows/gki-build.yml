@@ -33,14 +33,6 @@ on:
         required: true
         type: boolean
         default: true
-      lxc_enable:
-        required: true
-        type: boolean
-        default: false
-      schedhorizon_enable:
-        required: true
-        type: boolean
-        default: false
       only_ak3:
         required: true
         type: boolean
@@ -258,36 +250,6 @@ jobs:
             patch -p1 < fdinfo.c.patch
           else
             patch -p1 --fuzz=3 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
-          fi
-
-      - name: 添加schedhorizon调速器
-        run: |
-          if [[ "${{ github.event.inputs.schedhorizon_enable }}" == "true" ]]; then
-            echo "更改为配置目录: $CONFIG..."
-            cd "$CONFIG/common"
-            echo "下载相关文件"
-            curl -LSs https://raw.githubusercontent.com/Tools-cx-app/ztc_build_action/main/patches/schedhorizon/cpufreq_schedhorizon.c -o kernel/sched/cpufreq_schedhorizon.c
-            #curl -LSs https://raw.githubusercontent.com/Tools-cx-app/esk_build_action/main/patches/schedhorizon/sched.h -o kernel/sched/sched.h
-            echo "写入补丁"
-            echo "obj-\$(CONFIG_CPU_FREQ_GOV_SCHEDHORIZON) += cpufreq_schedhorizon.o" >> kernel/sched/Makefile
-          fi
-
-      - name: 添加lxc
-        run: |
-          if [[ "${{ github.event.inputs.lxc_enable }}" == "true" ]]; then
-            echo "更改为配置目录: $CONFIG..."
-            cd "$CONFIG/common"
-            echo "下载相关文件"
-            curl -LSs https://raw.githubusercontent.com/Tools-cx-app/ztc_build_action/main/patches/lxc/lxc_support.patch -o lxc.patch
-            echo "开始patch"
-            if [ -e "drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/context/mali_kbase_context.c" ]; then
-              patch -p1 --forward --fuzz=3 < lxc.patch
-            else
-              sed -i '/^diff --git.*mali_kbase_context\.c$/,/^diff --git/{
-                /^diff --git/!d
-              }' lxc.patch
-              patch -p1 --forward --fuzz=3 < lxc.patch
-            fi
           fi
 
       - name: 一些修复补丁

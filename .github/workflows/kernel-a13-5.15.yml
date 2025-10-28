@@ -18,14 +18,6 @@ on:
         required: true
         type: boolean
         default: false
-      lxc_enable:
-        required: true
-        type: boolean
-        default: false
-      schedhorizon_enable:
-        required: true
-        type: boolean
-        default: false
       only_ak3:
         required: false
         type: boolean
@@ -80,5 +72,3 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg || false }}
       only_ak3: ${{ inputs.only_ak3 || false }}
-      lxc_enable: ${{ inputs.lxc_enable || false }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable || false }}

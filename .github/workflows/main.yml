@@ -37,16 +37,6 @@ on:
         required: true
         type: boolean
         default: true
-      lxc_enable:
-        description: "是否开启lxc"
-        required: true
-        type: boolean
-        default: true
-      schedhorizon_enable:
-        description: "是否移植Schedhorizon调速器"
-        required: true
-        type: boolean
-        default: true
       only_ak3:
         description: "是否只构建AK3内核?"
         required: true
@@ -67,8 +57,6 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      lxc_enable: ${{ inputs.lxc_enable }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a13-5-10:
     if: ${{ inputs.android_version == 'Android 13' || inputs.android_version == 'All' }}
@@ -79,8 +67,6 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      lxc_enable: ${{ inputs.lxc_enable }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a13-5-15:
     if: ${{ inputs.android_version == 'Android 13' || inputs.android_version == 'All' }}
@@ -91,8 +77,6 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      lxc_enable: ${{ inputs.lxc_enable }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a14-5-15:
     if: ${{ inputs.android_version == 'Android 14' || inputs.android_version == 'All' }}
@@ -103,8 +87,6 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      lxc_enable: ${{ inputs.lxc_enable }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a14-6-1:
     if: ${{ inputs.android_version == 'Android 14' || inputs.android_version == 'All' }}
@@ -115,8 +97,6 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      lxc_enable: ${{ inputs.lxc_enable }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   build-kernel-a15-6-6:
     if: ${{ inputs.android_version == 'Android 15' || inputs.android_version == 'All' }}
@@ -127,8 +107,6 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       use_bbg: ${{ inputs.use_bbg }}
       only_ak3: ${{ inputs.only_ak3 }}
-      lxc_enable: ${{ inputs.lxc_enable }}
-      schedhorizon_enable: ${{ inputs.schedhorizon_enable }}
 
   check-build-status:
     runs-on: ubuntu-latest
@@ -237,8 +215,6 @@ jobs:
         - **KPM** ${{ inputs.use_kpm && '开启' || '未开启' }}
         - **BBG防格机补丁** ${{ inputs.use_bbg && '开启' || '未开启' }}
         - **LZ4 v1.10.0, LZ4KD, ONEPLUS_LZ4K** ${{ inputs.use_zram && '开启' || '未开启' }}
-        - **LXC** ${{ inputs.lxc_enable && '开启' || '未开启' }}
-        - **Schedhorizon调度** ${{ inputs.schedhorizon_enable && '开启' || '未开启' }}
 
         ## 附加工具
         - SukiSU管理器: https://github.com/SukiSU-Ultra/SukiSU-Ultra
