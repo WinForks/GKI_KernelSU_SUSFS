@@ -22,14 +22,6 @@ on:
           - Android 15
           - All
         default: Android 12
-      kernelsu_branch:
-        description: "Select SukiSU branch"
-        required: true
-        type: choice
-        options:
-          - Stable
-          - Dev
-        default: Stable
       use_kpm:
         description: "是否开启KPM功能?"
         required: true
@@ -236,8 +228,8 @@ jobs:
       RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}"
       RELEASE_NOTES: |
         ## 默认功能
-        - 增强隐藏环境补丁 (VFS Hooks, Magic Mount, Ptrace, Mountify)
-        - 网络功能增强优化配置 (IPSec, BBR v1, WireGuard)
+        - 增强隐藏环境补丁 (VFS Hooks, Ptrace, Mountify)
+        - 网络功能增强优化配置 (IPSec, 完整TCP算法套件)
         - O3编译优化配置 (提升性能，优化代码执行效率)
         - ThinLTO链接时优化 (减少二进制大小，提升性能)
 
@@ -251,9 +243,6 @@ jobs:
         ## 附加工具
         - SukiSU管理器: https://github.com/SukiSU-Ultra/SukiSU-Ultra
         - SUSFS4KSU模块: https://github.com/sidex15/ksu_module_susfs
-
-        ## 备注
-        - 点击下方 **[Assets]** 展开资源、底部还包含最新 **SukiSU管理器** 和 **SUSFS4KSU模块**
 
     steps:
       - name: Conditional Release Check
@@ -345,9 +334,7 @@ jobs:
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
-          echo "<details>" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "<summary>哈希值与链接</summary>" >> $GITHUB_ENV
+          echo "## 哈希值与链接" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
           echo "| 项目 | 版本 / 分支 | 哈希值 (点击跳转) |" >> $GITHUB_ENV
           echo "|------|-------------|-------------------|" >> $GITHUB_ENV
@@ -375,7 +362,8 @@ jobs:
           fi
 
           echo "" >> $GITHUB_ENV
-          echo "</details>" >> $GITHUB_ENV
+          echo "## 备注" >> $GITHUB_ENV
+          echo "- 点击下方 **[Assets]** 展开资源、底部还包含最新 **SukiSU管理器** 和 **SUSFS4KSU模块**" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Generate and Create New Tag (Atomic, check HEAD first)

@@ -274,7 +274,7 @@ jobs:
 
       - name: 添加lxc
         run: |
-          if [[ "${{ github.event.inputs.better_net }}" == "true" ]]; then
+          if [[ "${{ github.event.inputs.lxc_enable }}" == "true" ]]; then
             echo "更改为配置目录: $CONFIG..."
             cd "$CONFIG/common"
             echo "下载相关文件"
@@ -481,7 +481,6 @@ jobs:
 
           # Add KSU configuration settings
           echo "CONFIG_KSU=y" >> "$defconfig"
-
           echo "CONFIG_KPM=y" >> "$defconfig"
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "$defconfig"
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> "$defconfig"
