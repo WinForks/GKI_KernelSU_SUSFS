@@ -211,7 +211,7 @@ jobs:
         - O3编译优化配置 (提升性能，优化代码执行效率)
         - ThinLTO链接时优化 (减少二进制大小，提升性能)
 
-        ##可选功能
+        ## 可选功能
         - **KPM** ${{ inputs.use_kpm && '开启' || '未开启' }}
         - **BBG防格机补丁** ${{ inputs.use_bbg && '开启' || '未开启' }}
         - **LZ4 v1.10.0, LZ4KD, ONEPLUS_LZ4K** ${{ inputs.use_zram && '开启' || '未开启' }}
@@ -446,9 +446,17 @@ jobs:
           # Create a new directory for release assets
           mkdir -p release-assets
 
-          # Copy only ZIP files and APK files, not extracted contents
-          find ./release-artifacts-${{ github.run_id }} -name "*.zip" -exec cp -v {} ./release-assets \;
-          find ./release-artifacts-${{ github.run_id }} -name "*.apk" -exec cp -v {} ./release-assets \;
+          # If there are any directories (extracted artifacts like susfs-module), zip them
+          for d in ./release-artifacts-${{ github.run_id }}/*; do
+            if [ -d "$d" ]; then
+              base=$(basename "$d")
+              echo "Zipping directory: $base"
+              zip -r "./release-assets/${base}.zip" "$d"
+            fi
+          done
+
+          # Copy standalone zip and apk files (in case some artifacts were uploaded as single zip/apk)
+          find ./release-artifacts-${{ github.run_id }} -type f \( -iname "*.zip" -o -iname "*.apk" \) -exec cp -v {} ./release-assets \;
 
           echo "Artifacts prepared for upload:"
           ls -lh ./release-assets
