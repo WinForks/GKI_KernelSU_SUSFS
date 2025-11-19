@@ -90,7 +90,7 @@ jobs:
           REPO="SukiSU-Ultra/SukiSU-Ultra"
 
           FILENAME="build-manager.yml"
-          KSUM="manager"
+          KSUM="Manager"
 
           # 初始化
           NUMBER=0
