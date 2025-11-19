@@ -93,7 +93,6 @@ jobs:
               "ref": "${{ github.ref_name }}",
               "inputs": {
                 "android_version": "Android 12",
-                "kernelsu_branch": "Stable",
                 "use_zram": "true",
                 "use_bbg": "true",
                 "use_kpm": "true",
