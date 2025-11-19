@@ -206,7 +206,7 @@ jobs:
       RELEASE_NAME: "GKI内核: SukiSU(${{ needs.get_manager.outputs.ksuVer }}) & SUSFS ඞ ${{ needs.get_manager.outputs.susVer }}"
       RELEASE_NOTES: |
         ## 默认功能
-        - 增强隐藏环境补丁 (VFS Hooks, Ptrace, Mountify)
+        - 增强隐藏环境补丁 (SUSFS Inline Hooks, Ptrace, Mountify)
         - 网络功能增强优化配置 (IPSec, 完整TCP算法套件)
         - O3编译优化配置 (提升性能，优化代码执行效率)
         - ThinLTO链接时优化 (减少二进制大小，提升性能)
