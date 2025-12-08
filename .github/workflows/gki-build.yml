@@ -203,7 +203,7 @@ jobs:
           cd "$CONFIG" || { echo "无法切换到目录: $CONFIG" >&2; exit 1; }
 
           echo "添加 SukiSU..."
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s tmp-builtin
 
       - name: 添加 Baseband-guard 支持
         if: ${{ github.event.inputs.use_bbg == 'true' }}
